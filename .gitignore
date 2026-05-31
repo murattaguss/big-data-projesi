@@ -1,0 +1,13 @@
+target/
+.mvn-portable/
+books/
+*.jar
+*.class
+*.log
+.DS_Store
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+dependency-reduced-pom.xml
