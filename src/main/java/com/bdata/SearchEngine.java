@@ -119,11 +119,15 @@ public class SearchEngine {
             return Collections.emptyList();
         }
 
-        // Clean and tokenize search query
-        String[] terms = query.toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-zA-Z0-9 ]", "")
-                .trim()
-                .split("\\s+");
+        // Clean and tokenize search query exactly like the indexing job
+        String[] rawTerms = query.toLowerCase(Locale.ROOT).split("[^a-zA-Z0-9]+");
+        List<String> termsList = new ArrayList<>();
+        for (String t : rawTerms) {
+            if (!t.isEmpty()) {
+                termsList.add(t);
+            }
+        }
+        String[] terms = termsList.toArray(new String[0]);
 
         Set<String> intersectedDocs = null;
         List<String> activeTerms = new ArrayList<>();

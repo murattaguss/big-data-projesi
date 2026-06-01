@@ -906,10 +906,14 @@ public class LibraryGUI extends JFrame {
         final boolean hasQuotes = rawQuery.startsWith("\"") && rawQuery.endsWith("\"") && rawQuery.length() > 2;
         final String query = hasQuotes ? rawQuery.substring(1, rawQuery.length() - 1).trim() : rawQuery;
 
-        String[] termsCheck = query.toLowerCase(java.util.Locale.ROOT)
-                .replaceAll("[^a-zA-Z0-9 ]", "")
-                .trim()
-                .split("\\s+");
+        String[] rawTermsCheck = query.toLowerCase(java.util.Locale.ROOT).split("[^a-zA-Z0-9]+");
+        java.util.List<String> termsCheckList = new java.util.ArrayList<>();
+        for (String t : rawTermsCheck) {
+            if (!t.isEmpty()) {
+                termsCheckList.add(t);
+            }
+        }
+        String[] termsCheck = termsCheckList.toArray(new String[0]);
         final boolean runPhraseFilter = termsCheck.length > 1;
         final boolean strictPhrase = hasQuotes;
 
@@ -935,10 +939,14 @@ public class LibraryGUI extends JFrame {
 
                 if (runPhraseFilter) {
                     // Tokenize query to build exact phrase regex
-                    String[] terms = query.toLowerCase(java.util.Locale.ROOT)
-                            .replaceAll("[^a-zA-Z0-9 ]", "")
-                            .trim()
-                            .split("\\s+");
+                    String[] rawTerms = query.toLowerCase(java.util.Locale.ROOT).split("[^a-zA-Z0-9]+");
+                    java.util.List<String> termsList = new java.util.ArrayList<>();
+                    for (String t : rawTerms) {
+                        if (!t.isEmpty()) {
+                            termsList.add(t);
+                        }
+                    }
+                    String[] terms = termsList.toArray(new String[0]);
 
                     StringBuilder phraseRegex = new StringBuilder("\\b");
                     boolean hasValidTerm = false;
@@ -946,7 +954,7 @@ public class LibraryGUI extends JFrame {
                         if (term.isEmpty())
                             continue;
                         if (hasValidTerm) {
-                            phraseRegex.append("\\s+");
+                            phraseRegex.append("[^a-zA-Z0-9]+");
                         }
                         phraseRegex.append(Pattern.quote(term));
                         hasValidTerm = true;
@@ -982,15 +990,6 @@ public class LibraryGUI extends JFrame {
                             } catch (Exception e) {
                                 // Skip on error
                             }
-                        }
-                    }
-
-                    // Fallback to keyword search if not strict phrase and no phrase matches found
-                    if (matchedRows.isEmpty() && !strictPhrase) {
-                        for (SearchEngine.SearchResult res : results) {
-                            String docId = res.getDocId();
-                            String title = searchEngine.getBookTitle(docId);
-                            matchedRows.add(new Object[] { title, docId, String.format("%.6f", res.getScore()) });
                         }
                     }
                 } else {
@@ -1243,10 +1242,14 @@ public class LibraryGUI extends JFrame {
         boolean isPhraseSearch = query.startsWith("\"") && query.endsWith("\"") && query.length() > 2;
         String cleanQuery = isPhraseSearch ? query.substring(1, query.length() - 1).trim() : query;
 
-        String[] terms = cleanQuery.toLowerCase(java.util.Locale.ROOT)
-                .replaceAll("[^a-zA-Z0-9 ]", "")
-                .trim()
-                .split("\\s+");
+        String[] rawTerms = cleanQuery.toLowerCase(java.util.Locale.ROOT).split("[^a-zA-Z0-9]+");
+        java.util.List<String> termsList = new java.util.ArrayList<>();
+        for (String t : rawTerms) {
+            if (!t.isEmpty()) {
+                termsList.add(t);
+            }
+        }
+        String[] terms = termsList.toArray(new String[0]);
 
         String text = txtBookViewer.getText();
         Highlighter highlighter = txtBookViewer.getHighlighter();
@@ -1263,7 +1266,7 @@ public class LibraryGUI extends JFrame {
             if (term.isEmpty())
                 continue;
             if (hasValidTerm) {
-                phraseRegex.append("\\s+");
+                phraseRegex.append("[^a-zA-Z0-9]+");
             }
             phraseRegex.append(Pattern.quote(term));
             hasValidTerm = true;
@@ -1289,11 +1292,24 @@ public class LibraryGUI extends JFrame {
         // highlight individual keywords
         // No stopwords are filtered out here because if the user explicitly typed it,
         // we highlight it.
-        if (!foundPhrase && hasValidTerm) {
+        if (!foundPhrase && hasValidTerm && terms.length == 1) {
+            java.util.Set<String> stopWords = new java.util.HashSet<>(java.util.Arrays.asList(
+                "the", "a", "an", "and", "or", "but", "of", "for", "in", "on", "at", "to", "by", "with", "from",
+                "as", "is", "was", "were", "are", "be", "been", "being", "it", "its", "they", "them", "their",
+                "this", "that", "these", "those", "i", "you", "he", "she", "we", "his", "her", "him", "my",
+                "your", "our", "me", "us", "had", "have", "has", "do", "does", "did", "will", "would", "shall",
+                "should", "can", "could", "may", "might", "must"
+            ));
+
             for (String term : terms) {
                 term = term.trim();
                 if (term.isEmpty())
                     continue;
+
+                // Skip highlighting common stopwords individually if it's a multi-word query
+                if (terms.length > 1 && stopWords.contains(term.toLowerCase(java.util.Locale.ROOT))) {
+                    continue;
+                }
 
                 try {
                     Pattern pattern = Pattern.compile("\\b" + Pattern.quote(term) + "\\b", Pattern.CASE_INSENSITIVE);
