@@ -37,17 +37,22 @@ public class SearchEngine {
                 while ((line = br.readLine()) != null) {
                     line = line.trim();
                     // Each line looks like: "12345": "Some Title",
-                    if (!line.startsWith("\"")) continue;
+                    if (!line.startsWith("\""))
+                        continue;
                     int firstQuoteEnd = line.indexOf('"', 1);
-                    if (firstQuoteEnd == -1) continue;
+                    if (firstQuoteEnd == -1)
+                        continue;
                     String id = line.substring(1, firstQuoteEnd);
                     int colonIdx = line.indexOf(':', firstQuoteEnd + 1);
-                    if (colonIdx == -1) continue;
+                    if (colonIdx == -1)
+                        continue;
                     String rest = line.substring(colonIdx + 1).trim();
-                    if (!rest.startsWith("\"")) continue;
+                    if (!rest.startsWith("\""))
+                        continue;
                     int titleStart = 1;
                     int titleEnd = rest.lastIndexOf('"');
-                    if (titleEnd <= titleStart) continue;
+                    if (titleEnd <= titleStart)
+                        continue;
                     String title = rest.substring(titleStart, titleEnd);
                     bookTitles.put(id, title);
                 }
